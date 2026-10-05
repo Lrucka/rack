@@ -1,5 +1,6 @@
 name: Build Rack Mapper APK
 
+# Triggered for Rack Mapper Pro v2.2 Android build
 on:
   workflow_dispatch:
   push:
