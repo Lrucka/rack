@@ -1,0 +1,53 @@
+name: Build Rack Mapper APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths:
+      - '.github/workflows/build-apk.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Restore Android project
+        shell: bash
+        run: |
+          cat build-src/rackpart_*.b64 > source.b64
+          base64 -d source.b64 > RackMapperAndroid-v2.2-source.zip
+          echo "ee6e9a7072b19f48e38718af417ca896520f52c8ebb1570e71a469f7ac9d84be  RackMapperAndroid-v2.2-source.zip" | sha256sum -c -
+          unzip -q RackMapperAndroid-v2.2-source.zip
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK packages
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+
+      - name: Build APK
+        run: gradle -p RackMapperAndroid assembleDebug --stacktrace
+
+      - name: Rename APK
+        run: cp RackMapperAndroid/app/build/outputs/apk/debug/app-debug.apk RackMapperPro-v2.2.apk
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: RackMapperPro-v2.2-APK
+          path: RackMapperPro-v2.2.apk
+          if-no-files-found: error
